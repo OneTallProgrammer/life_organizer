@@ -2,64 +2,13 @@ from tkinter import *
 import calendar
 import datetime
 
-global selection
-selection = 'Today'
 
-class interactive_calendar:
-    def __init__(self, year, month):
-        self.master = Tk()
-        self.master.title('CALENDER')
-        self.master.minsize(width=310, height=0)
-        self.master.resizable(width=False, height=False)
+    def exit_window(self):
+        self.master.quit()
+        self.master.destroy()
 
-        self.btn_array = [] #holds all of the button objects used for dates
-        self.pressed_button = Button(self.master)
-
-        self.year = year
-        self.month = month
-
-        #self.data_list = self.generate_month_list(self.year, self.month)
-
-        self.not_done = True # set to False when user is ready to exit calendar
-
-        self.header_frame = Frame(self.master)
-        self.header_frame.grid(row=0, column=0)
-
-        self.date_frame = Frame(self.master)
-        self.date_frame.grid(row=1, column=0)
-
-        self.display_date_frame = Frame(self.master)
-        self.display_date_frame.grid(row=2, column=0)
-
-        self.date = StringVar()
-        self.date.set('Today')
-
-        self.add_button = Button(self.display_date_frame, text='add', command=
-        lambda: set_selection(self.date.get()))
-        self.add_button.grid(row=0, column=0)
-
-        self.done_button = Button(self.display_date_frame, text='done', command=
-        lambda: self.master.destroy())
-        self.done_button.grid(row=0, column=1)
-
-        # heading lablels
-        self.year_label = Label(self.header_frame, text='')
-        self.month_label = Label(self.header_frame, text='')
-
-        # next and prev buttons scroll through the months
-        self.prev = Button(self.header_frame, text='prev', relief=SOLID, command=lambda: self.new_month(-1))
-        self.prev.grid(row=0, column=0, sticky='w')
-
-        self.next = Button(self.header_frame, text='next', relief=SOLID, command=lambda: self.new_month(1))
-        self.next.grid(row=0, column=3)
-
-        # opens calender to the current month
-        self.new_month(0)
-
-        self.master.mainloop()
-
-    def return_date(self):
-        return self.date.get()
+    def return_selection(self):
+        return self.selection
 
     def new_month(self, mod):
         self.month_label.grid_forget()
@@ -127,7 +76,7 @@ class interactive_calendar:
                 row += 1
 
     def select_day(self, day, day_list):
-        self.date.set(datetime.date(self.year, self.month, day))
+        self.selection = datetime.date(self.year, self.month, day)
         day_list[day - 1]['relief'] = SUNKEN
         self.pressed_button['relief'] = FLAT
         self.pressed_button = day_list[day - 1]
@@ -153,13 +102,8 @@ class interactive_calendar:
         #print(month_list)
         return month_list
 
-def set_selection(date):
-    global selection
-    selection = date
-    print(selection)
-
 def open_calendar():
-    global selction
+    global selection
 
     # generate today
     today = datetime.date.today()
@@ -175,8 +119,9 @@ def open_calendar():
     # generate interactive calendar
     cal = interactive_calendar(year, month)
 
-    print(selection)
-    return selection
+open_calendar()
+
+
 
 
 
