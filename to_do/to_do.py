@@ -2,16 +2,17 @@ from tkinter import *
 import add_win
 import sqlite3
 
-conn = sqlite3.connect('to_do.db')
-curs = conn.cursor()
+
+def create_table(curs):
+    curs.execute('CREATE TABLE IF NOT EXISTS to_do( date DATE, title TEXT, notes TEXT, d INTEGER, '
+                 'w INTEGER, m INTEGER, y INTEGER )')
+
 
 def remove_items():
     print('do stuff')
 
 
-def add_items():
-    global conn
-    global curs
+def add_items(conn, curs):
 
     root = Tk()
 
@@ -19,13 +20,15 @@ def add_items():
 
     root.mainloop()
 
+
 def main(arg):
-    #create_table()
+    conn = sqlite3.connect('to_do.db')
+    curs = conn.cursor()
+
+    create_table(curs)
 
     if arg == '-add':
-        add_items()
-    elif arg == '-remove':
-        remove_items()
+        add_items(conn, curs)
     '''
     elif arg == '-myweek':
         display_date_range(next 7 days):
