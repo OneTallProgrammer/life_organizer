@@ -304,67 +304,75 @@ class Window:
 
         string = ''.join(characters)
 
-        string = string.replace('\n', '')
         string = string.replace('\t', '')
 
         return string
 
+
     def refresh_list(self):
         WEEK = 7
+        YEAR = 365
 
         # clear the list
         self.to_do_list.delete(0, END)
 
-        # select daily recurring appointments
-        self.curs.execute('SELECT title, date, d, w, m, y FROM to_do WHERE date=? OR d=? OR w=? OR m=? OR y=?',
-                          (self.date.get(),1, 1, 1, 1))
+        # select and display daily recurring reminders
+        self.curs.execute('SELECT title FROM to_do WHERE d=1')
 
         for row in self.curs.fetchall():
-            if row[2] == 1:
-                # daily recurrence
+            title = row[0]
+            self.to_do_list.insert(END, 'D: ' + title)
+            self.to_do_list.itemconfig(END, bg='#e1ffe4')
+
+        # select and display weekly recurring reminders
+        self.curs.execute('SELECT title, date FROM to_do WHERE w=1')
+
+        for row in self.curs.fetchall():
+            day_1 = datetime.datetime.strptime(row[1], '%Y-%m-%d')
+            day_2 = datetime.datetime.strptime(self.date.get(), '%Y-%m-%d')
+
+            if (day_1 - day_2).days % WEEK == 0:
                 title = row[0]
-                self.to_do_list.insert(END, title)
-                self.to_do_list.itemconfig(END, bg='#99ff99')
-            elif row[3] == 1 or row[4] == 1 or row[5] == 1:
-                date_made = datetime.datetime.strptime(row[1], "%Y-%m-%d")
-                date_selected = datetime.datetime.strptime(self.date.get(), "%Y-%m-%d")
+                self.to_do_list.insert(END, 'W: ' + title)
+                self.to_do_list.itemconfig(END, bg='#ffc2b2')
+        # select and display monthly recurring reminders
+        self.curs.execute('SELECT title, date FROM to_do WHERE m=1')
 
-                # weekly recurrence
-                if (date_selected - date_made).days % WEEK == 0 and row[3] == 1:
-                    title = row[0]
-                    self.to_do_list.insert(END, title)
-                    self.to_do_list.itemconfig(END, bg='#ccccff')
+        for row in self.curs.fetchall():
+            # extract day from date string format yyyy-mm-dd
+            day_made = int(row[1][8:])
+            day_select = int(self.date.get()[8:])
+            end_of_month = calendar.monthrange(int(self.date.get()[0:4]), int(self.date.get()[5:7]))[1]
 
-                # monthly/yearly recurrence
-                elif row[4] == 1 or row[5] == 1:
-                    # date made variables
-                    year_1 = date_made.year
-                    month_1 = date_made.month
-                    day_1 = date_made.day
+            # if the day is same as the day  of the month that the reminder was created or
+            # if its the end of the month and the reminder made at the end of a longer month
+            if day_select == day_made or (day_made > day_select and day_select == end_of_month):
+                title = row[0]
+                self.to_do_list.insert(END,  'M: ' + title)
+                self.to_do_list.itemconfig(END, bg='#e0d8ff')
 
-                    # date selected variables
-                    year_2 = date_selected.year
-                    month_2 = date_selected.month
-                    day_2 = date_selected.day
+        # select and display yearly recurring dates
+        self.curs.execute('SELECT title, date FROM to_do WHERE y=1')
 
-                    # monthly recurrence
-                    end_of_month = calendar.monthrange(year_2, month_2)[1]
-                    if day_2 == end_of_month and day_1 > end_of_month:
-                        day_2 = day_1
-                    if day_1 == day_2 and row[4] == 1:
-                        title = row[0]
-                        self.to_do_list.insert(END, title)
-                        self.to_do_list.itemconfig(END, bg='#ffcc66')
+        for row in self.curs.fetchall():
+            # extract date from string format yyyy-mm-dd
+            day_1 = datetime.datetime.strptime(row[1], '%Y-%m-%d')
+            day_2 = datetime.datetime.strptime(self.date.get(), '%Y-%m-%d')
 
-                    # yearly recurrence
-                    elif (month_1 == month_2 and day_1 == day_2) and row[5] == 1:
-                        title = row[0]
-                        self.to_do_list.insert(END, title)
-                        self.to_do_list.itemconfig(END, bg='#66ccff')
+            if (day_1 - day_2).days % YEAR == 0:
+                title = row[0]
+                self.to_do_list.insert(END, 'Y: ' + title)
+                self.to_do_list.itemconfig(END, bg='orange')
 
-            elif row[2] == 0 and row[3] == 0 and row[4] == 0 and row[5] == 0 and row[1] == self.date.get():
-                    title = row[0]
-                    self.to_do_list.insert(END, title)
+
+
+
+        #ffb5bb
+        #f7ffd8
+
+        # select and display monthly recurring items
+
+
 
     def display_notes(self, click):
         try:
@@ -376,8 +384,27 @@ class Window:
             self.title_entry.delete(0, END)
             self.notes_text.delete('0.0', END)
 
-            # select the notes with the proper title and date
-            self.curs.execute("SELECT title, notes FROM to_do WHERE title=?", (self.to_do_list.get(index),))
+            index = self.to_do_list.curselection()[0]
+            title = self.to_do_list.get(index)
+
+            if title[0:3] == 'D: ' or title[0:3] == 'W: ' or title[0:3] == 'M: ' or title[0:3] == 'Y: ':
+                prefix = title[0:3]
+                title = title[3:]
+                if prefix == 'D: ':
+                    self.curs.execute('SELECT notes FROM to_do WHERE title=? AND d=1', (title))
+                    if len(self.curs.fetchall()) != 1:
+                        print('Error: Multiple records pulled - revise function "display notes"')
+                    else:
+                        notes = self.curs.fetchall()[0][0]
+                        self.notes_text.insert('0.0', notes)
+
+
+
+
+
+
+
+
             # extract the string
             selection = self.curs.fetchall()
             selection = selection[0]
@@ -419,7 +446,7 @@ class Window:
         data[2] = self.format_string(data[2])
 
         # Delete any duplicate before writing
-        self.curs.execute('DELETE FROM to_do WHERE date=? AND title=?', (data[0], data[1]))
+        #self.curs.execute('DELETE FROM to_do WHERE date=? AND title=?', (data[0], data[1]))
 
 
 
@@ -446,7 +473,27 @@ class Window:
         except IndexError:
             return
         else:
-            self.curs.execute('DELETE FROM to_do WHERE title=?', (self.to_do_list.get(index),))
+            index = self.to_do_list.curselection()[0]
+            title = self.to_do_list.get(index)
+
+            if title[0:3] == 'D: ':
+                title = title[3:] # shave off the prefix
+                self.curs.execute('DELETE FROM to_do WHERE title=? AND d=1', (title,))
+            elif title[0:3] == 'W: ':
+                title = title[3:] # shave off the prefix
+                self.curs.execute('DELETE FROM to_do WHERE title=? AND w=1', (title,))
+            elif title[0:3] == 'M: ':
+                title = title[3:] # shave off the prefix
+                self.curs.execute('DELETE FROM to_do WHERE title=? AND m=1', (title,))
+            elif title[0:3] == 'Y: ':
+                title = title[3:] # shave off the prefix
+                self.curs.execute('DELETE FROM to_do WHERE title=? AND y=1', (title,))
+            else:
+                self.curs.execute('DELETE FROM to_do WHERE title=? AND date=?', (title, self.date.get(),))
+
+
+
+
             self.db.commit()
             self.refresh_list()
             self.notes_text.delete('0.0', END)
