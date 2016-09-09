@@ -4,8 +4,7 @@ import sqlite3
 
 
 def create_table(curs):
-    curs.execute('CREATE TABLE IF NOT EXISTS to_do( date DATE, title TEXT, notes TEXT, d INTEGER, '
-                 'w INTEGER, m INTEGER, y INTEGER )')
+    curs.execute('CREATE TABLE IF NOT EXISTS to_do( id INTEGER, date DATE, title TEXT, notes TEXT, recur INT)')
 
 
 def remove_items():
