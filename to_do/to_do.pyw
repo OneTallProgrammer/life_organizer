@@ -1,7 +1,10 @@
 from tkinter import *
 import add_win
 import sqlite3
+import os
 
+
+file_path = os.path.dirname(__file__)
 
 def create_table(curs):
     curs.execute('CREATE TABLE IF NOT EXISTS to_do( id INTEGER, date DATE, title TEXT, notes TEXT, recur INT)')
@@ -21,7 +24,7 @@ def add_items(conn, curs):
 
 
 def main(arg):
-    conn = sqlite3.connect('to_do.db')
+    conn = sqlite3.connect(os.path.join(file_path, 'reminders.db'))
     curs = conn.cursor()
 
     create_table(curs)

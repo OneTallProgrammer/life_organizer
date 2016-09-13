@@ -8,7 +8,7 @@ class Window:
 
 
         master.title('Add a To Do Item')
-        #master.resizable(width=False, height=False)
+        master.resizable(width=False, height=False)
         #master.minsize(width=550, height=380)
 
         #link the window to the db
@@ -59,16 +59,16 @@ class Window:
         self.date_label = Label(self.top_frame, text='Date:')
         self.date_label.grid(row=1, sticky='W')
 
-        self.recur_label = Label(self.top_frame, text='Recurrance:')
+        self.recur_label = Label(self.top_frame, text='Recur:')
         self.recur_label.grid(row=4, sticky='W')
 
         # entries
-        self.title_entry = Entry(self.top_frame, bg='#ffffcc')
-        self.title_entry.grid(row=0, column=1)
+        self.title_entry = Entry(self.top_frame, width=30, bg='#ffffcc')
+        self.title_entry.grid(row=0, column=1, pady=(12, 0))
 
         self.date = StringVar()
         self.date.set('Today')
-        self.date_entry = Entry(self.top_frame, textvariable=self.date, state='disabled', bg='#ffffcc')
+        self.date_entry = Entry(self.top_frame, textvariable=self.date, width=30, state='disabled', bg='#ffffcc')
         self.date_entry.grid(row=1, column=1)
 
         self.notes_text = Text(self.top_frame, height=7, width=22, wrap=WORD, bg='#ffffcc')
@@ -79,22 +79,22 @@ class Window:
         self.checkbox_frame.grid(row=4, column=1)
 
         self.recur_var = IntVar()
+        self.recur_var.set(0)
+
+        self.no_recur = Radiobutton(self.checkbox_frame, variable=self.recur_var, text='no', value=0)
+        self.no_recur.grid(row=0, column=0)
 
         self.daily_recur = Radiobutton(self.checkbox_frame, variable=self.recur_var, text='dy', value=1)
-        self.daily_recur.grid(row=0, column=0)
-        self.daily_recur.config(highlightbackground='white')
+        self.daily_recur.grid(row=0, column=1)
 
         self.weekly_recur = Radiobutton(self.checkbox_frame, variable=self.recur_var, text='wk', value=2)
-        self.weekly_recur.grid(row=0, column=1)
-        self.weekly_recur.config(highlightbackground='white')
+        self.weekly_recur.grid(row=0, column=2)
 
         self.monthly_recur = Radiobutton(self.checkbox_frame, variable=self.recur_var, text='mn', value=3)
-        self.monthly_recur.grid(row=0, column=2)
-        self.monthly_recur.config(highlightbackground='white')
+        self.monthly_recur.grid(row=0, column=3)
 
         self.yearly_recur = Radiobutton(self.checkbox_frame, variable=self.recur_var, text='yr', value=4)
-        self.yearly_recur.grid(row=0, column=3)
-        self.yearly_recur.config(highlightbackground='white')
+        self.yearly_recur.grid(row=0, column=4)
 
         #buttons
         self.add_button = Button(self.bottom_frame, text='add', command=lambda: self.write_to_db())
@@ -141,7 +141,7 @@ class Window:
         self.scrollbar = Scrollbar(self.list_frame)
         self.scrollbar.grid(row=0, column=1, sticky='NS')
 
-        self.to_do_list = Listbox(self.list_frame, width=69, yscrollcommand=self.scrollbar.set, bg='#99ccff')
+        self.to_do_list = Listbox(self.list_frame, width=95, yscrollcommand=self.scrollbar.set, bg='#99ccff')
         self.to_do_list.grid(row=0, column=0, sticky='E')
 
         self.scrollbar.config(command=self.to_do_list.yview)
@@ -243,8 +243,8 @@ class Window:
 
         # print the dates as buttons and bind them to a method
         while index < len(self.cal_data):
-            new_button = Button(self.cal_dates, text=self.cal_data[index], relief=FLAT, bg='white', command=
-            lambda opt=int(self.cal_data[index]):
+            new_button = Button(self.cal_dates, text=self.cal_data[index], relief=FLAT, width=5,
+                                bg='white', command=lambda opt=int(self.cal_data[index]):
             self.select_day(opt)
             )
 
@@ -293,6 +293,9 @@ class Window:
         self.btn_array[day - 1]['bg'] = '#ffffcc'
         self.pressed_button = self.btn_array[day - 1]
 
+        self.title_entry.delete(0, END)
+        self.notes_text.delete('0.0', END)
+        self.recur_var.set(0)
         self.refresh_list()
 
 
@@ -332,7 +335,7 @@ class Window:
             self.notes_text.delete('0.0', END)
 
             id = self.appts[index][0]
-            self.curs.execute('SELECT title, notes, recur FROM to_do WHERE id=?', (str(id)))
+            self.curs.execute('SELECT title, notes, recur FROM to_do WHERE id=?', (str(id),))
 
             selection = self.curs.fetchall()
 
@@ -417,14 +420,12 @@ class Window:
             self.appts.append(row)  # save to memory for deletion and indexing purposes
             self.to_do_list.insert(END, row[1])
 
-        print(self.appts)
 
     def check_if_updating(self, click):
         try:
             index = self.to_do_list.curselection()[0]
         except IndexError:
             self.add_button.config(text='add', command=lambda: self.write_to_db())
-            self.recur_var.set(0)
         else:
             if self.title_entry.get() == self.appts[index][1]:
                 self.add_button.config(text='update', command=lambda: self.update_record())
@@ -506,7 +507,7 @@ class Window:
             return
         else:
             id = self.appts[index][0]
-            self.curs.execute('DELETE FROM to_do WHERE id=?', (str(id)))
+            self.curs.execute('DELETE FROM to_do WHERE id=?', (str(id),))
 
             # update id tags
             self.db_length -= 1
